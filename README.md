@@ -6,11 +6,9 @@ Based on GOSSIP protocol, Cassandra implementation is used for reference.
 I've been working on this for months and started thinking about it in last year. This time I want to make things interesting. I've read a lot of project source code for it, such as Cassandra, ETCD, Badger, GoLevel Db, BoltDb, Riot and so on. Thank them. I also read a lot of algorithmic books and source codes, thanks to gods, mmap-go.
 
 
-
 The first version (**sansan**) is expected to be released on **9 August 2019**.
 
 Developing......
-
 
 
 Features
