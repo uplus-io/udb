@@ -1,0 +1,27 @@
+name: "udb"
+seeds:
+- "127.0.0.1:1107"
+- "127.0.0.1:1108"
+- "127.0.0.1:1109"
+replica_count: 2
+
+bind_ip:
+- "127.0.0.1"
+- "192.168.1.106"
+bind_port: 1107
+advertise_port: 1107
+
+security:
+  secret: "abcdef0123456789"
+
+storage:
+  engine: "BADGER"
+  meta: "./db/ubase/meta"
+  wal: "./db/ubase/wal"
+  partitions:
+  - "./db/ubase/data/0"
+  - "./db/ubase/data/1"
+  - "./db/ubase/data/2"
+log:
+  level: 5
+  path: "./db/ubase/log"

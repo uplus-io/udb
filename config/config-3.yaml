@@ -1,0 +1,22 @@
+name: "udb"
+seeds:
+- "127.0.0.1:1107"
+- "127.0.0.1:1108"
+- "127.0.0.1:1109"
+
+security:
+  secret: "abcdef0123456789"
+
+db:
+  base:
+    enable: true
+    bind_ip:
+    - "127.0.0.1"
+    - "192.168.1.106"
+    bind_port: 1109
+    advertise_port: 1109
+    log:
+      path: "."
+      filename: "ubase3"
+      level: 5
+  sql:
