@@ -9,9 +9,6 @@ I've been working on this for months and started thinking about it in last year.
 The first version (**sansan**) is expected to be released on **9 August 2019**.
 
 
-Developing......
-
-
 Features
 ......
 
