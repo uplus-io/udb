@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package proto;
+
+message Repository {
+    int32 DataCenter = 1;
+    int32 Area = 2;
+    int32 Rack = 3;
+}
+
+message Partition {
+    int32 id = 1;
+    int32 index = 2;
+}
+
+message Storage {
+    repeated Partition partitions = 1;
+}
+
+message Namespace {
+    int64 id = 1;
+    string name = 2;
+}
+
+message Table {
+    int64 id = 1;
+    string name = 2;
+}

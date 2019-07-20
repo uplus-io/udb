@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package proto;
+
+import "common.proto";
+
+enum NodeHealth {
+    Suspect = 0;
+    Alive = 1;
+    Dead = 2;
+}
+
+enum NodeStatus {
+    Unknown = 0;
+    Normal = 1;
+    Unavailable = 2;
+    New = 3;
+    Recovering = 4;
+}
+
+message Node {
+    int32 id = 2;
+    string ip = 3;
+    int32 port = 4;
+    Repository repository = 5;
+    NodeHealth health = 7;
+    NodeStatus status = 8;
+}

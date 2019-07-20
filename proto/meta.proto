@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package proto;
+
+import "common.proto";
+import "data.proto";
+
+message DataMeta {
+    int64 id = 1;
+    Repository repository = 2;
+    Partition partition = 3;
+    repeated DataDesc history = 4;
+}

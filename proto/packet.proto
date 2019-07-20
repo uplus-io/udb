@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package proto;
+
+enum PacketCategory {
+    System = 0;
+    Data = 2;
+}
+
+enum PacketType {
+    SystemHi = 0;
+    DataPush = 100;
+    DataPull = 101;
+    DataPushPull = 102;
+}
+
+message Packet {
+    int32 version = 1;
+    string id = 2;
+    PacketCategory category = 3;
+    PacketType type = 4;
+    int32 dataCenter = 5;
+    int32 from = 6;
+    int32 to = 7;
+    bytes content = 8;
+}

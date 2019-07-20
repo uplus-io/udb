@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package proto;
+
+import "common.proto";
+
+message StorageMeta {
+    int32 version = 1;
+}
+
+message PartitionMeta {
+    Repository repo = 1;
+    int32 node = 2;
+    repeated Partition parts = 3;
+}
