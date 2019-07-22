@@ -31,7 +31,7 @@ func TestConsistentHash(t *testing.T) {
 	}
 
 	for k, v := range consistent.Nodes {
-		fmt.Println("Recover:", k, " Value:", v.Value)
+		fmt.Println("recoverMeta:", k, " Value:", v.Value)
 	}
 
 	ipMap := make(map[string]int, 0)

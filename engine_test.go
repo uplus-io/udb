@@ -242,7 +242,7 @@ func lessInt(a, b interface{}) bool {
 //}
 
 //func rbtreeLoop(i llrb.Item) bool {
-//	fmt.Printf("key:%s val:%d\n", i.(TestKey).Key, i.(TestKey).Recover)
+//	fmt.Printf("key:%s val:%d\n", i.(TestKey).Key, i.(TestKey).recoverMeta)
 //	return true
 //}
 

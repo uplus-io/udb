@@ -20,6 +20,53 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type Description struct {
+	Namespace            int32    `protobuf:"varint,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Table                int32    `protobuf:"varint,2,opt,name=table,proto3" json:"table,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Description) Reset()         { *m = Description{} }
+func (m *Description) String() string { return proto.CompactTextString(m) }
+func (*Description) ProtoMessage()    {}
+func (*Description) Descriptor() ([]byte, []int) {
+	return fileDescriptor_555bd8c177793206, []int{0}
+}
+
+func (m *Description) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Description.Unmarshal(m, b)
+}
+func (m *Description) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Description.Marshal(b, m, deterministic)
+}
+func (m *Description) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Description.Merge(m, src)
+}
+func (m *Description) XXX_Size() int {
+	return xxx_messageInfo_Description.Size(m)
+}
+func (m *Description) XXX_DiscardUnknown() {
+	xxx_messageInfo_Description.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Description proto.InternalMessageInfo
+
+func (m *Description) GetNamespace() int32 {
+	if m != nil {
+		return m.Namespace
+	}
+	return 0
+}
+
+func (m *Description) GetTable() int32 {
+	if m != nil {
+		return m.Table
+	}
+	return 0
+}
+
 type Repository struct {
 	DataCenter           int32    `protobuf:"varint,1,opt,name=DataCenter,proto3" json:"DataCenter,omitempty"`
 	Area                 int32    `protobuf:"varint,2,opt,name=Area,proto3" json:"Area,omitempty"`
@@ -33,7 +80,7 @@ func (m *Repository) Reset()         { *m = Repository{} }
 func (m *Repository) String() string { return proto.CompactTextString(m) }
 func (*Repository) ProtoMessage()    {}
 func (*Repository) Descriptor() ([]byte, []int) {
-	return fileDescriptor_555bd8c177793206, []int{0}
+	return fileDescriptor_555bd8c177793206, []int{1}
 }
 
 func (m *Repository) XXX_Unmarshal(b []byte) error {
@@ -76,8 +123,9 @@ func (m *Repository) GetRack() int32 {
 }
 
 type Partition struct {
-	Id                   int32    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Index                int32    `protobuf:"varint,2,opt,name=index,proto3" json:"index,omitempty"`
+	Version              int32    `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	Id                   int32    `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	Index                int32    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -87,7 +135,7 @@ func (m *Partition) Reset()         { *m = Partition{} }
 func (m *Partition) String() string { return proto.CompactTextString(m) }
 func (*Partition) ProtoMessage()    {}
 func (*Partition) Descriptor() ([]byte, []int) {
-	return fileDescriptor_555bd8c177793206, []int{1}
+	return fileDescriptor_555bd8c177793206, []int{2}
 }
 
 func (m *Partition) XXX_Unmarshal(b []byte) error {
@@ -107,6 +155,13 @@ func (m *Partition) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Partition proto.InternalMessageInfo
+
+func (m *Partition) GetVersion() int32 {
+	if m != nil {
+		return m.Version
+	}
+	return 0
+}
 
 func (m *Partition) GetId() int32 {
 	if m != nil {
@@ -133,7 +188,7 @@ func (m *Storage) Reset()         { *m = Storage{} }
 func (m *Storage) String() string { return proto.CompactTextString(m) }
 func (*Storage) ProtoMessage()    {}
 func (*Storage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_555bd8c177793206, []int{2}
+	return fileDescriptor_555bd8c177793206, []int{3}
 }
 
 func (m *Storage) XXX_Unmarshal(b []byte) error {
@@ -162,18 +217,19 @@ func (m *Storage) GetPartitions() []*Partition {
 }
 
 type Namespace struct {
-	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Desc                 *Description `protobuf:"bytes,1,opt,name=desc,proto3" json:"desc,omitempty"`
+	Id                   int32        `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string       `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *Namespace) Reset()         { *m = Namespace{} }
 func (m *Namespace) String() string { return proto.CompactTextString(m) }
 func (*Namespace) ProtoMessage()    {}
 func (*Namespace) Descriptor() ([]byte, []int) {
-	return fileDescriptor_555bd8c177793206, []int{3}
+	return fileDescriptor_555bd8c177793206, []int{4}
 }
 
 func (m *Namespace) XXX_Unmarshal(b []byte) error {
@@ -194,7 +250,14 @@ func (m *Namespace) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Namespace proto.InternalMessageInfo
 
-func (m *Namespace) GetId() int64 {
+func (m *Namespace) GetDesc() *Description {
+	if m != nil {
+		return m.Desc
+	}
+	return nil
+}
+
+func (m *Namespace) GetId() int32 {
 	if m != nil {
 		return m.Id
 	}
@@ -209,18 +272,19 @@ func (m *Namespace) GetName() string {
 }
 
 type Table struct {
-	Id                   int64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Desc                 *Description `protobuf:"bytes,1,opt,name=desc,proto3" json:"desc,omitempty"`
+	Id                   int32        `protobuf:"varint,2,opt,name=id,proto3" json:"id,omitempty"`
+	Name                 string       `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *Table) Reset()         { *m = Table{} }
 func (m *Table) String() string { return proto.CompactTextString(m) }
 func (*Table) ProtoMessage()    {}
 func (*Table) Descriptor() ([]byte, []int) {
-	return fileDescriptor_555bd8c177793206, []int{4}
+	return fileDescriptor_555bd8c177793206, []int{5}
 }
 
 func (m *Table) XXX_Unmarshal(b []byte) error {
@@ -241,7 +305,14 @@ func (m *Table) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Table proto.InternalMessageInfo
 
-func (m *Table) GetId() int64 {
+func (m *Table) GetDesc() *Description {
+	if m != nil {
+		return m.Desc
+	}
+	return nil
+}
+
+func (m *Table) GetId() int32 {
 	if m != nil {
 		return m.Id
 	}
@@ -256,6 +327,7 @@ func (m *Table) GetName() string {
 }
 
 func init() {
+	proto.RegisterType((*Description)(nil), "proto.Description")
 	proto.RegisterType((*Repository)(nil), "proto.Repository")
 	proto.RegisterType((*Partition)(nil), "proto.Partition")
 	proto.RegisterType((*Storage)(nil), "proto.Storage")
@@ -266,19 +338,22 @@ func init() {
 func init() { proto.RegisterFile("common.proto", fileDescriptor_555bd8c177793206) }
 
 var fileDescriptor_555bd8c177793206 = []byte{
-	// 216 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x8e, 0x4f, 0x4b, 0xc4, 0x30,
-	0x10, 0xc5, 0x69, 0xbb, 0x51, 0x3a, 0x8a, 0xc8, 0xe0, 0x21, 0x27, 0x59, 0x72, 0x5a, 0x10, 0xd6,
-	0x7f, 0x47, 0x4f, 0xa2, 0x67, 0x91, 0xb8, 0x5f, 0x60, 0xda, 0x0e, 0x12, 0x34, 0x99, 0x90, 0xe6,
-	0xa0, 0xdf, 0x5e, 0x9a, 0x56, 0xe9, 0xd1, 0x53, 0x5e, 0xde, 0xbc, 0x79, 0xbf, 0x81, 0xd3, 0x5e,
-	0xbc, 0x97, 0xb0, 0x8f, 0x49, 0xb2, 0xa0, 0x2a, 0x8f, 0x39, 0x00, 0x58, 0x8e, 0x32, 0xba, 0x2c,
-	0xe9, 0x1b, 0x2f, 0x01, 0x9e, 0x29, 0xd3, 0x13, 0x87, 0xcc, 0x49, 0x57, 0xdb, 0x6a, 0xa7, 0xec,
-	0xca, 0x41, 0x84, 0xcd, 0x63, 0x62, 0xd2, 0x75, 0x99, 0x14, 0x3d, 0x79, 0x96, 0xfa, 0x0f, 0xdd,
-	0xcc, 0xde, 0xa4, 0xcd, 0x2d, 0xb4, 0xaf, 0x94, 0xb2, 0xcb, 0x4e, 0x02, 0x9e, 0x41, 0xed, 0x86,
-	0xa5, 0xac, 0x76, 0x03, 0x5e, 0x80, 0x72, 0x61, 0xe0, 0xaf, 0xa5, 0x65, 0xfe, 0x98, 0x07, 0x38,
-	0x7e, 0xcb, 0x92, 0xe8, 0x9d, 0xf1, 0x06, 0x20, 0xfe, 0x6e, 0x8f, 0xba, 0xda, 0x36, 0xbb, 0x93,
-	0xbb, 0xf3, 0xf9, 0xec, 0xfd, 0x5f, 0xad, 0x5d, 0x65, 0xcc, 0x35, 0xb4, 0x2f, 0xe4, 0x79, 0x8c,
-	0xd4, 0xf3, 0x8a, 0xd7, 0x14, 0x1e, 0xc2, 0x26, 0x90, 0xe7, 0x82, 0x6b, 0x6d, 0xd1, 0xe6, 0x0a,
-	0xd4, 0x81, 0xba, 0xcf, 0x7f, 0x85, 0xbb, 0xa3, 0x82, 0xbe, 0xff, 0x09, 0x00, 0x00, 0xff, 0xff,
-	0x7c, 0xba, 0x83, 0xc4, 0x41, 0x01, 0x00, 0x00,
+	// 270 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x90, 0xc1, 0x4b, 0xc3, 0x30,
+	0x14, 0xc6, 0x69, 0xd7, 0x3a, 0xfa, 0x2a, 0x22, 0x0f, 0x0f, 0x3d, 0x88, 0x8c, 0x1c, 0x64, 0xa7,
+	0x21, 0xf3, 0xe8, 0x69, 0xb8, 0x9b, 0x20, 0x92, 0x0d, 0x3c, 0x67, 0xe9, 0x43, 0x82, 0x36, 0x09,
+	0x49, 0x10, 0xfd, 0xef, 0x25, 0x69, 0x36, 0x0b, 0x5e, 0x3d, 0xf5, 0x7d, 0xdf, 0xeb, 0xfb, 0xe5,
+	0xe3, 0x83, 0x73, 0x69, 0x86, 0xc1, 0xe8, 0x95, 0x75, 0x26, 0x18, 0xac, 0xd3, 0x87, 0x6d, 0xa0,
+	0xdd, 0x92, 0x97, 0x4e, 0xd9, 0xa0, 0x8c, 0xc6, 0x6b, 0x68, 0xb4, 0x18, 0xc8, 0x5b, 0x21, 0xa9,
+	0x2b, 0x16, 0xc5, 0xb2, 0xe6, 0xbf, 0x06, 0x5e, 0x41, 0x1d, 0xc4, 0xe1, 0x83, 0xba, 0x32, 0x6d,
+	0x46, 0xc1, 0xf6, 0x00, 0x9c, 0xac, 0xf1, 0x2a, 0x18, 0xf7, 0x8d, 0x37, 0x00, 0x5b, 0x11, 0xc4,
+	0x23, 0xe9, 0x40, 0x2e, 0x23, 0x26, 0x0e, 0x22, 0x54, 0x1b, 0x47, 0x22, 0x23, 0xd2, 0x1c, 0x3d,
+	0x2e, 0xe4, 0x7b, 0x37, 0x1b, 0xbd, 0x38, 0xb3, 0x27, 0x68, 0x5e, 0x84, 0x0b, 0x2a, 0xc5, 0xea,
+	0x60, 0xfe, 0x49, 0xce, 0x2b, 0xa3, 0x33, 0xf1, 0x28, 0xf1, 0x02, 0x4a, 0xd5, 0x67, 0x58, 0xa9,
+	0xfa, 0x18, 0x51, 0xe9, 0x9e, 0xbe, 0x32, 0x6b, 0x14, 0xec, 0x01, 0xe6, 0xbb, 0x60, 0x9c, 0x78,
+	0x23, 0xbc, 0x03, 0xb0, 0x47, 0xae, 0xef, 0x8a, 0xc5, 0x6c, 0xd9, 0xae, 0x2f, 0xc7, 0x4e, 0x56,
+	0xa7, 0x07, 0xf9, 0xe4, 0x1f, 0xf6, 0x0a, 0xcd, 0xf3, 0xa9, 0x82, 0x5b, 0xa8, 0x7a, 0xf2, 0x32,
+	0xc5, 0x68, 0xd7, 0x98, 0x0f, 0x27, 0x15, 0xf2, 0xb4, 0xff, 0x93, 0x0b, 0xa1, 0x8a, 0x3d, 0xa6,
+	0x58, 0x0d, 0x4f, 0x33, 0xdb, 0x41, 0xbd, 0x8f, 0x0d, 0xfe, 0x27, 0xf4, 0x70, 0x96, 0x8e, 0xef,
+	0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0xa6, 0x12, 0xb9, 0xb8, 0xee, 0x01, 0x00, 0x00,
 }

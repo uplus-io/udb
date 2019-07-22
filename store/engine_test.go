@@ -10,20 +10,31 @@ import (
 	"uplus.io/udb/config"
 )
 
-func TestEngine_SystemNamespace(t *testing.T) {
+func TestEngine_Namespaces(t *testing.T) {
 	engine := createEngine()
 	defer engine.Close()
-	engine.IfAbsentCreateNamespace("uplus")
-	for _, ns := range engine.SystemNamespaces() {
-		fmt.Printf("ns[id:%d name:%s]\n", ns.Id, ns.Name)
+	table := engine.Table()
+	table.IfAbsentNS("uplus")
+	for _, ns := range table.NSs() {
+		fmt.Printf("ns[%s]\n", ns.String())
+	}
+}
+
+func TestEngine_Tables(t *testing.T) {
+	engine := createEngine()
+	defer engine.Close()
+	table := engine.Table()
+	table.IfAbsentTab("_user")
+	for _, tab := range table.Tabs() {
+		fmt.Printf("tab[%s]\n", tab.String())
 	}
 }
 
 func TestEngine_MetaIterator(t *testing.T) {
 	engine := createEngine()
 	defer engine.Close()
-	engine.meta.ForEach(func(data Data) bool {
-		fmt.Printf("key[%s/%s/%s] val:[%s]\n", data.Id.Namespace, data.Id.Table, string(data.Id.Key), string(data.Content))
+	engine.MetaForEach(func(data Data) bool {
+		fmt.Printf("key[%s/%s/%s] val len:%d\n", data.Id.Namespace, data.Id.Table, string(data.Id.Key), len(data.Content))
 		return true
 	})
 }

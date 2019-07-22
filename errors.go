@@ -25,6 +25,10 @@ var (
 )
 
 //database
+var (
+	ErrPartAllocated   = errors.New("partition has been allocated")
+	ErrPartNotAllocate = errors.New("partition not allocate")
+)
 
 var (
 	ErrDbKeyNotFound = errors.New("db:key not found")

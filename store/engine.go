@@ -6,6 +6,7 @@ package store
 
 import (
 	"uplus.io/udb/config"
+	"uplus.io/udb/proto"
 )
 
 type Engine struct {
@@ -13,6 +14,8 @@ type Engine struct {
 	meta       Store
 	partitions []Store
 	partSize   int
+
+	table *EngineTable
 }
 
 func NewEngine(config config.StorageConfig) *Engine {
@@ -24,7 +27,9 @@ func NewEngine(config config.StorageConfig) *Engine {
 		store := NewStore(StoreConfig{Path: path, Type: storeType})
 		stores[i] = store
 	}
-	return &Engine{config: config, meta: meta, partitions: stores, partSize: partSize}
+	engine := &Engine{config: config, meta: meta, partitions: stores, partSize: partSize}
+	engine.table = NewEngineTable(engine)
+	return engine
 }
 
 func (p *Engine) Close() {
@@ -34,8 +39,16 @@ func (p *Engine) Close() {
 	}
 }
 
-func (v Engine) dataPart(id Identity) Store {
-	return v.partitions[id.Part(v.partSize)]
+func (p *Engine) Table() *EngineTable {
+	return p.table
+}
+
+func (p *Engine) MetaSeek(id Identity, iter StoreIterator) error {
+	return p.meta.Seek(id, iter)
+}
+
+func (p *Engine) MetaForEach(iter StoreIterator) error {
+	return p.meta.ForEach(iter)
 }
 
 func (p *Engine) SetMeta(data Data) error {
@@ -46,10 +59,24 @@ func (p *Engine) GetMeta(id Identity) (*Data, error) {
 	return p.meta.Get(id)
 }
 
-func (p *Engine) SetData(data Data) error {
-	return p.dataPart(data.Id).Set(data)
+func (p *Engine) DataSeek(partIndex int32, id Identity, iter StoreIterator) error {
+	return p.part(partIndex).Seek(id, iter)
 }
 
-func (p *Engine) GetData(id Identity) (*Data, error) {
-	return p.dataPart(id).Get(id)
+func (p *Engine) part(partIndex int32) Store {
+	return p.partitions[partIndex]
+}
+
+func (p *Engine) SetData(partId int32, data Data) error {
+	//return p.dataPart(&data.Id).Set(data)
+	return nil
+}
+
+func (p *Engine) GetData(partId int32, id Identity) (*Data, error) {
+	//return p.dataPart(&id).Get(id)
+	return nil, nil
+}
+
+func (p *Engine) AddPart(part proto.Partition) error {
+	return p.Table().AddPartition(part)
 }

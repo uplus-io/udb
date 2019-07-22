@@ -9,10 +9,15 @@ import (
 	"log"
 	"strings"
 	"uplus.io/udb/hash"
+	"uplus.io/udb/utils"
 )
 
 type StoreType uint8
-type StoreIterator func(data Data) bool
+type StoreIterator func(key,data []byte) bool
+
+const (
+	VERSION = 1
+)
 
 const (
 	STORE_TYPE_UDB StoreType = iota
@@ -44,20 +49,16 @@ type StoreConfig struct {
 }
 
 type Store interface {
-	Set(data Data) error
+	Close() error
 
-	Get(id Identity) (*Data, error)
+	Set(key,value []byte) error
 
-	//Delete(k []byte) error
-	//
-	//Exits(k []byte) (bool, error)
-	//
-	Seek(id Identity, iter StoreIterator) error
+	Get(key []byte) ([]byte, error)
+
+	Seek(key []byte, iter StoreIterator) error
 
 	ForEach(iter StoreIterator) error
-	//
-	Close() error
-	//
+
 	//WALName() string
 }
 
@@ -77,15 +78,19 @@ func NewStore(cfg StoreConfig) (s Store) {
 }
 
 type Identity struct {
-	Namespace string
-	Table     string
-	Key       []byte
-	keyValue  int64
-	id        []byte
+	NamespaceId    int32  //命名空间id
+	Namespace      string //命名空间名称
+	TableId        int32  //表id
+	Table          string //表名称
+	PartitionIndex int32  //分区索引
+	PartitionId    int32  //分区id
+	Key            []byte //用户主键
+	keyValue       int64  //用户主键系统id值
+	id             []byte //系统id
 }
 
-func NsTabBytes(ns, tab string) []byte {
-	bytes := []byte(fmt.Sprintf("%s/%s/", ns, tab))
+func NsTabBytes(ns, tab int32) []byte {
+	bytes := []byte(fmt.Sprintf("%d/%d/", ns, tab))
 	//val := hash.UInt64(bytes)
 	//return utils.LUInt64ToBytes(val)
 	return bytes
@@ -97,15 +102,26 @@ func KeyBytes(key []byte) []byte {
 	return key
 }
 
-func NsTabKeyBytes(ns, tab string, key []byte) []byte {
+func NsTabKeyBytes(ns, tab int32, key []byte) []byte {
 	return append(NsTabBytes(ns, tab), KeyBytes(key)...)
+}
+
+func IdentityVersionId(identity Identity, version int32) []byte {
+	bytes := []byte(fmt.Sprintf("/%d", version))
+	return append(identity.IdBytes(), bytes...)
+}
+
+func IdentityMetaId(identity Identity) []byte {
+	bytes := []byte("/meta")
+	return append(identity.IdBytes(), bytes...)
 }
 
 func NewIdentity(ns, tab string, key []byte) *Identity {
 	identity := &Identity{Namespace: ns, Table: tab, Key: key}
-	identity.keyValue = hash.Int64(key)
-	identity.id = NsTabKeyBytes(ns, tab, key)
-	//identity.idValue = hash.Int64(identity.id)
+	identity.NamespaceId = hash.Int32Of(ns)
+	identity.TableId = hash.Int32Of(tab)
+	identity.keyValue = hash.Int64(identity.Key)
+	identity.id = NsTabKeyBytes(identity.NamespaceId, identity.TableId, identity.Key)
 	return identity
 }
 
@@ -114,6 +130,12 @@ func NewIdentityWithValue(idBytes []byte) *Identity {
 	ns := bits[0]
 	tab := bits[1]
 	key := bits[2]
+	identity := &Identity{}
+	identity.NamespaceId = utils.StringToInt32(ns)
+	identity.TableId = utils.StringToInt32(tab)
+	identity.Key = []byte(key)
+	identity.keyValue = hash.Int64(identity.Key)
+	identity.id = NsTabKeyBytes(identity.NamespaceId, identity.TableId, identity.Key)
 	return NewIdentity(ns, tab, []byte(key))
 }
 
@@ -133,14 +155,15 @@ func (v Identity) IdBytes() []byte {
 //	return utils.LInt64ToBytes(v.keyValue)
 //}
 
-func (v Identity) Part(partSize int) int {
+func (v Identity) Part(partSize int) int32 {
 	i := v.keyValue & 0x7FFFFFFFFFFFFFFF
-	return int(i % int64(partSize))
+	return int32(i % int64(partSize))
 }
 
 type Data struct {
 	Id      Identity
 	Content []byte
+	Version int32
 }
 
 func NewData(id Identity, con []byte) *Data {
