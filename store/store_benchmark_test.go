@@ -51,7 +51,7 @@ func storeWrite(store Store, cfg StoreBenchmarkTestConfig) {
 			for j := indexStart; j < indexEnd; j++ {
 				key := benchmark.GenerateKey(j)
 				start = time.Now()
-				store.Set(*NewData(*NewIdentity("ns","tab",key),dat1K))
+				store.Set(NewIdentity("ns", "tab", key).IdBytes(), dat1K)
 				//fmt.Printf("[%d]write %s \n",id,string(key))
 				times += time.Since(start)
 				total += 1
@@ -103,7 +103,7 @@ func storeRead(store Store, cfg StoreBenchmarkTestConfig) {
 			for j := indexStart; j < indexEnd; j++ {
 				key := benchmark.RandomInt16()
 				start = time.Now()
-				_, err := store.Get(*NewIdentity("ns","tab",key))
+				_, err := store.Get(NewIdentity("ns", "tab", key).IdBytes())
 				if err != nil {
 					fmt.Printf("%s[%d]read error %s\n", cfg.name, id, string(key))
 				}

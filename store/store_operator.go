@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"uplus.io/udb"
 	"uplus.io/udb/hash"
 	log "uplus.io/udb/logger"
@@ -9,7 +10,16 @@ import (
 )
 
 type StoreOperator interface {
+	Close() error
 	//系统操作
+
+	PartIfAbsent(part proto.Partition) (*proto.Partition, error)
+	Part() *proto.Partition
+
+	MetaSeek(identity Identity, iter StoreIterator) error
+	MetaForEach(iter StoreIterator) error
+	DataSeek(identity Identity, iter StoreIterator) error
+	DataForEach(iter StoreIterator) error
 
 	NSs() []proto.Namespace
 	NS(namespace string) *proto.Namespace
@@ -29,6 +39,57 @@ type StoreOperator interface {
 
 type StoreOperatorKV struct {
 	store Store
+}
+
+func NewStoreOperatorKV(store Store) *StoreOperatorKV {
+	return &StoreOperatorKV{store: store}
+}
+
+func (p *StoreOperatorKV) Close() error {
+	return p.store.Close()
+}
+
+func (p *StoreOperatorKV) PartIfAbsent(part proto.Partition) (*proto.Partition, error) {
+	partition := p.Part()
+	if partition == nil {
+		identity := NewIdOfPart([]byte(ENGINE_KEY_META_PART))
+		bytes, err := proto.Marshal(&part)
+		if err != nil {
+			return nil, err
+		}
+		err = p.store.Set(identity.IdBytes(), bytes)
+		if err != nil {
+			return nil, err
+		}
+		return &part, nil
+	}
+	return partition, nil
+}
+func (p *StoreOperatorKV) Part() *proto.Partition {
+	identity := NewIdOfPart([]byte(ENGINE_KEY_META_PART))
+	bytes, err := p.store.Get(identity.IdBytes())
+	if err != nil {
+		return nil
+	}
+	partition := &proto.Partition{}
+	err = proto.Unmarshal(bytes, partition)
+	if err != nil {
+		return nil
+	}
+	return partition
+}
+
+func (p *StoreOperatorKV) MetaSeek(identity Identity, iter StoreIterator) error {
+	return p.store.Seek(IdentityMetaId(identity), iter)
+}
+func (p *StoreOperatorKV) MetaForEach(iter StoreIterator) error {
+	return p.store.Seek(FLAG_META, iter)
+}
+func (p *StoreOperatorKV) DataSeek(identity Identity, iter StoreIterator) error {
+	return p.store.Seek(IdentityDataId(identity), iter)
+}
+func (p *StoreOperatorKV) DataForEach(iter StoreIterator) error {
+	return p.store.Seek(FLAG_DATA, iter)
 }
 
 func (p *StoreOperatorKV) NSs() []proto.Namespace {
@@ -67,7 +128,8 @@ func (p *StoreOperatorKV) NSValue(nsId int32) *proto.Namespace {
 func (p *StoreOperatorKV) NSIfAbsent(namespace string) *proto.Namespace {
 	nsId := hash.Int32Of(namespace)
 	ns := &proto.Namespace{}
-	identity := NewIdOfNs(utils.LInt32ToBytes(nsId))
+	//identity := NewIdOfNs(utils.LInt32ToBytes(nsId))
+	identity := NewIdOfNs([]byte(fmt.Sprintf("%d", nsId)))
 	data, err := p.store.Get(identity.IdBytes())
 	if err == udb.ErrDbKeyNotFound {
 		ns.Id = nsId
@@ -128,7 +190,8 @@ func (p *StoreOperatorKV) TABValue(namespace string, tabId int32) *proto.Table {
 func (p *StoreOperatorKV) TABIfAbsent(namespace string, tab string) *proto.Table {
 	tabId := hash.Int32Of(tab)
 	table := &proto.Table{}
-	identity := NewIdOfTab(namespace, utils.LInt32ToBytes(tabId))
+	//identity := NewIdOfTab(namespace, utils.LInt32ToBytes(tabId))
+	identity := NewIdOfTab(namespace, []byte(fmt.Sprintf("%d", tabId)))
 	data, err := p.store.Get(identity.IdBytes())
 	if err == udb.ErrDbKeyNotFound {
 		table.Id = tabId
@@ -175,26 +238,24 @@ func (p *StoreOperatorKV) GetMeta(dataId Identity) (meta *proto.DataMeta, err er
 }
 
 func (p *StoreOperatorKV) SetData(data Data) error {
-	meta, err := p.GetMeta(data.Id)
+	identity := data.Id
+	meta, err := p.GetMeta(identity)
 	if err != nil {
 		return err
 	}
 	if meta == nil {
-		meta = &proto.DataMeta{Id: IdentityVersionId(data.Id, 1), Version: 1}
+		meta = &proto.DataMeta{Id: IdentityVersionId(identity, 1), Version: 1}
 	} else {
 		meta.Version = meta.Version + 1
-		meta.Id = IdentityVersionId(data.Id, meta.Version)
+		meta.Id = IdentityVersionId(identity, meta.Version)
 	}
-	metaId := IdentityMetaId(data.Id)
-	metaData, err := proto.Marshal(meta)
-	if err != nil {
+	p.SetMeta(identity, *meta)
+	content := &proto.DataContent{Deleted:false,Content:data.Content}
+	bytes, err := proto.Marshal(content)
+	if err != nil{
 		return err
 	}
-	err = p.store.Set(metaId, metaData)
-	if err != nil {
-		return err
-	}
-	err = p.store.Set(data.Id.IdBytes(), data.Content)
+	err = p.store.Set(meta.Id, bytes)
 	if err != nil {
 		//todo://rollback meta
 		return err

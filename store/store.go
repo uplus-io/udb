@@ -13,7 +13,7 @@ import (
 )
 
 type StoreType uint8
-type StoreIterator func(key,data []byte) bool
+type StoreIterator func(key, data []byte) bool
 
 const (
 	VERSION = 1
@@ -33,10 +33,9 @@ var (
 		"LEVELDB": 2,
 		"BADGER":  3,
 	}
-)
 
-const (
-	DEFAULT_KV_DATABASE_NAME = "udb-kv"
+	FLAG_META = []byte{'0'}
+	FLAG_DATA = []byte{'1'}
 )
 
 func StoreTypeOfValue(val string) StoreType {
@@ -51,7 +50,7 @@ type StoreConfig struct {
 type Store interface {
 	Close() error
 
-	Set(key,value []byte) error
+	Set(key, value []byte) error
 
 	Get(key []byte) ([]byte, error)
 
@@ -90,7 +89,7 @@ type Identity struct {
 }
 
 func NsTabBytes(ns, tab int32) []byte {
-	bytes := []byte(fmt.Sprintf("%d/%d/", ns, tab))
+	bytes := []byte(fmt.Sprintf("/%d/%d/", ns, tab))
 	//val := hash.UInt64(bytes)
 	//return utils.LUInt64ToBytes(val)
 	return bytes
@@ -108,12 +107,16 @@ func NsTabKeyBytes(ns, tab int32, key []byte) []byte {
 
 func IdentityVersionId(identity Identity, version int32) []byte {
 	bytes := []byte(fmt.Sprintf("/%d", version))
-	return append(identity.IdBytes(), bytes...)
+	id := append(identity.IdBytes(), bytes...)
+	return append(FLAG_DATA, id...)
 }
 
 func IdentityMetaId(identity Identity) []byte {
-	bytes := []byte("/meta")
-	return append(identity.IdBytes(), bytes...)
+	return append(FLAG_META, identity.IdBytes()...)
+}
+
+func IdentityDataId(identity Identity) []byte {
+	return append(FLAG_DATA, identity.IdBytes()...)
 }
 
 func NewIdentity(ns, tab string, key []byte) *Identity {

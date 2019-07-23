@@ -26,6 +26,7 @@ var (
 
 //database
 var (
+	ErrPartNotFound    = errors.New("partition not found")
 	ErrPartAllocated   = errors.New("partition has been allocated")
 	ErrPartNotAllocate = errors.New("partition not allocate")
 )

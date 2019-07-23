@@ -7,6 +7,7 @@ package store
 import (
 	"github.com/dgraph-io/badger"
 	"uplus.io/udb"
+	log "uplus.io/udb/logger"
 )
 
 type StoreBadger struct {
@@ -17,6 +18,7 @@ func OpenStoreBadger(cfg StoreConfig) (Store, error) {
 	storeBolt := &StoreBadger{}
 	options := badger.LSMOnlyOptions(cfg.Path)
 	options.WithTruncate(true)
+	options.Logger = nil
 	db, err := badger.Open(options)
 	//db, err := badger.Open(badger.DefaultOptions(cfg.Path))
 	if err != nil {
@@ -61,6 +63,7 @@ func (p *StoreBadger) Seek(key []byte, iter StoreIterator) (err error) {
 			if err != nil {
 				return err
 			}
+			log.Debugf("seek key:%s", item.Key())
 			notBreak := iter(item.Key(), content)
 			if !notBreak {
 				break
@@ -81,6 +84,7 @@ func (p *StoreBadger) ForEach(iter StoreIterator) (err error) {
 			if err != nil {
 				return err
 			}
+			log.Debugf("foreach key:%v", string(item.Key()))
 			notBreak := iter(item.Key(), content)
 			if !notBreak {
 				break
