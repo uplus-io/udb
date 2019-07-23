@@ -8,6 +8,7 @@ require (
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/go-ego/riot v0.0.0-20190307162011-3d971d90bc83
 	github.com/golang/protobuf v1.3.1
+	github.com/hashicorp/go-sockaddr v1.0.0
 	github.com/hashicorp/memberlist v0.1.4
 	github.com/rs/xid v1.2.1
 	github.com/satori/go.uuid v1.2.0

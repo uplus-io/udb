@@ -18,16 +18,17 @@ type PacketSystemDispatcher struct {
 
 func NewPacketSystemDispatcher(cluster *Cluster) *PacketSystemDispatcher {
 	dispatcher := &PacketSystemDispatcher{cluster: cluster, handlerMap: make(map[proto.PacketType]PacketHandler)}
-	dispatcher.register(proto.PacketType_CLOCK, dispatcher.handleClock)
+	dispatcher.register(proto.PacketType_SystemHi, dispatcher.handleClusterHi)
 	return dispatcher
 }
 
-func (p *PacketSystemDispatcher) Dispatch(message proto.Packet) {
+func (p *PacketSystemDispatcher) Dispatch(message proto.Packet) error {
 	handler, exist := p.handlerMap[message.Type]
 	if !exist {
-		log.Warnf("message handler[%d] not found", message.Type)
+		log.Errorf("message handler[%d] not found", message.Type)
+		return nil
 	} else {
-		handler(message)
+		return handler(message)
 	}
 }
 
@@ -40,7 +41,14 @@ func (p *PacketSystemDispatcher) register(messageType proto.PacketType, handler 
 	return nil
 }
 
-func (p *PacketSystemDispatcher) handleClock(message proto.Packet) () {
+func (p *PacketSystemDispatcher) handleClusterHi(packet proto.Packet) error {
+	nodeInfo := &proto.NodeInfo{}
+	err := proto.Unmarshal(packet.Content, nodeInfo)
+	if err != nil {
+		log.Warnf("handle systemHi unmarshal packet error")
+	}
+	log.Debugf("handleClusterHi from[%d] nodeInfo[%s]", packet.From, nodeInfo.String())
+	return nil
 	//node, b := p.center.Cluster.Node(message.From)
 	//if !b {
 	//	log.Errorf("cannot update clock[%v] of node[%d]", message.Timestamp,message.From)

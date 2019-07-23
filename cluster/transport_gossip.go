@@ -6,8 +6,8 @@ package cluster
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-sockaddr"
 	"github.com/hashicorp/memberlist"
-	"strconv"
 	"uplus.io/udb"
 	"uplus.io/udb/hash"
 	log "uplus.io/udb/logger"
@@ -19,10 +19,11 @@ type TransportGossip struct {
 	config  *TransportConfig
 	members *memberlist.Memberlist
 	nodes   map[int32]*memberlist.Node
+	me      *TransportInfo
 }
 
 func NewTransportGossip(config *TransportConfig) *TransportGossip {
-	return &TransportGossip{config: config}
+	return &TransportGossip{config: config, nodes: make(map[int32]*memberlist.Node)}
 }
 
 func CreateProtoNode(node *memberlist.Node) *proto.Node {
@@ -33,13 +34,19 @@ func CreateProtoNode(node *memberlist.Node) *proto.Node {
 func (p *TransportGossip) Serving() *TransportInfo {
 	cfg := p.config
 	if cfg.Id == 0 {
-		host := fmt.Sprintf("%s:%d", cfg.BindIp, cfg.BindPort)
-		id := hash.UInt32Of(host)
+		var host string
+		if cfg.BindIp[0] == "0.0.0.0" {
+			ip, _ := sockaddr.GetPrivateIP()
+			host = fmt.Sprintf("%s:%d", ip, cfg.BindPort)
+		} else {
+			host = fmt.Sprintf("%s:%d", cfg.BindIp, cfg.BindPort)
+		}
+		id := hash.Int32Of(host)
 		cfg.Id = id
 	}
 
 	config := memberlist.DefaultLocalConfig()
-	config.Name = strconv.Itoa(int(cfg.Id))
+	config.Name = utils.Int32ToString(cfg.Id)
 	config.SecretKey = []byte(cfg.Secret)
 	config.BindPort = cfg.BindPort
 	config.AdvertisePort = cfg.AdvertisePort
@@ -53,11 +60,20 @@ func (p *TransportGossip) Serving() *TransportInfo {
 	}
 	members.Join(cfg.Seeds)
 	p.members = members
-	return &TransportInfo{Id: cfg.Id,}
+	p.me = &TransportInfo{Id: int32(cfg.Id),}
+
+	for _, node := range members.Members() {
+		p.NotifyJoin(node)
+	}
+	return p.me
 }
 
 func (p *TransportGossip) Shutdown() {
 	p.members.Shutdown()
+}
+
+func (p *TransportGossip) Me() TransportInfo {
+	return *p.me
 }
 
 func (p *TransportGossip) nativeNode(nodeId int32) *memberlist.Node {

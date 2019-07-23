@@ -131,8 +131,5 @@ a:2:100 b:2:102 c:1:90
  */
 
 func (p *DataVectorClock) Compare(left Versions, right Versions) int {
-	for _, ver := range left.Versions {
-		_, v := right.GetVersion(ver.NodeId)
-
-	}
+	return 0
 }

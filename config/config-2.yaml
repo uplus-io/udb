@@ -3,20 +3,24 @@ seeds:
 - "127.0.0.1:1107"
 - "127.0.0.1:1108"
 - "127.0.0.1:1109"
+replica_count: 2
+
+bind_ip:
+- "0.0.0.0"
+bind_port: 1108
+advertise_port: 1108
 
 security:
   secret: "abcdef0123456789"
 
-db:
-  base:
-    enable: true
-    bind_ip:
-    - "127.0.0.1"
-    - "192.168.1.106"
-    bind_port: 1108
-    advertise_port: 1108
-    log:
-      path: "."
-      filename: "ubase2"
-      level: 5
-  sql:
+storage:
+  engine: "BADGER"
+  meta: "./test-data/cluster2/meta"
+  wal: "./test-data/cluster2/wal"
+  partitions:
+  - "./test-data/cluster2/data/0"
+  - "./test-data/cluster2/data/1"
+  - "./test-data/cluster2/data/2"
+log:
+  level: 5
+  path: "./test-data/cluster2/log"

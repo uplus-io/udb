@@ -18,7 +18,7 @@ const (
 )
 
 type TransportConfig struct {
-	Id            uint32
+	Id            int32
 	BindIp        []string
 	BindPort      int
 	AdvertisePort int
@@ -30,7 +30,7 @@ type TransportConfig struct {
 }
 
 type TransportInfo struct {
-	Id     uint32          //节点Id
+	Id     int32          //节点Id
 	Name   string          //节点名称
 	Status TransportStatus //节点状态
 	Addr   net.IP          //节点ip
@@ -43,4 +43,5 @@ type Transport interface {
 	Shutdown()
 	SendToTCP(nodeId int32, msg []byte) error
 	SendToUDP(nodeId int32, msg []byte) error
+	Me() TransportInfo
 }

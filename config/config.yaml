@@ -6,8 +6,7 @@ seeds:
 replica_count: 2
 
 bind_ip:
-- "127.0.0.1"
-- "192.168.1.106"
+- "0.0.0.0"
 bind_port: 1107
 advertise_port: 1107
 
@@ -16,12 +15,12 @@ security:
 
 storage:
   engine: "BADGER"
-  meta: "./db/ubase/meta"
-  wal: "./db/ubase/wal"
+  meta: "./test-data/cluster1/meta"
+  wal: "./test-data/cluster1/wal"
   partitions:
-  - "./db/ubase/data/0"
-  - "./db/ubase/data/1"
-  - "./db/ubase/data/2"
+  - "./test-data/cluster1/data/0"
+  - "./test-data/cluster1/data/1"
+  - "./test-data/cluster1/data/2"
 log:
   level: 5
-  path: "./db/ubase/log"
+  path: "./test-data/cluster1/log"

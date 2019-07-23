@@ -5,6 +5,8 @@
 package store
 
 import (
+	"uplus.io/udb"
+	log "uplus.io/udb/logger"
 	"uplus.io/udb/proto"
 )
 
@@ -12,13 +14,15 @@ const (
 	ENGINE_NAMESPACE_SYSTEM = "_sys"  // 系统命名空间
 	ENGINE_NAMESPACE_USER   = "_user" // 用户命名空间
 
-	ENGINE_TABLE_NAMESPACES = "_ns"   //系统命名空间表名
-	ENGINE_TABLE_TABLES     = "_tab"  //系统表名
-	ENGINE_TABLE_PARTITIONS = "_part" //系统分区表名
-	ENGINE_TABLE_METAS      = "_meta" //系统元数据表名
+	ENGINE_TABLE_NAMESPACES = "_ns"      //系统命名空间表名
+	ENGINE_TABLE_TABLES     = "_tab"     //系统表名
+	ENGINE_TABLE_PARTITIONS = "_part"    //系统分区表名
+	ENGINE_TABLE_CLUSTERS   = "_cluster" //集群信息存储表
+	ENGINE_TABLE_METAS      = "_meta"    //系统元数据表名
 
-	ENGINE_KEY_META_STORAGE = "storage" //存储元数据主键
-	ENGINE_KEY_META_PART    = "part"    //分区元数据主键
+	ENGINE_KEY_META_STORAGE    = "storage" //存储元数据主键
+	ENGINE_KEY_META_PART       = "part"    //分区元数据主键
+	ENGINE_KEY_META_REPOSITORY = "repo"    //分区元数据主键
 )
 
 var (
@@ -61,6 +65,24 @@ func (p *EngineTable) recoverPartition() {
 			p.parts[partition.Id] = partition
 		}
 	}
+}
+
+func (p *EngineTable) Repository() *proto.Repository {
+	repo := &proto.Repository{}
+	err := p.engine.meta.SysGet(ENGINE_TABLE_CLUSTERS, ENGINE_KEY_META_REPOSITORY, repo)
+	if err != nil && err != udb.ErrDbKeyNotFound {
+		log.Errorf("get cluster repository meta")
+		return nil
+	}
+	return repo
+}
+
+func (p *EngineTable) RepositoryUpdate(repository proto.Repository) error {
+	return p.engine.meta.SysSet(ENGINE_TABLE_CLUSTERS, ENGINE_KEY_META_REPOSITORY, &repository)
+}
+
+func(p *EngineTable)  PartitionOfIndex(partIndex int32)*proto.Partition  {
+	return p.engine.part(partIndex).Part()
 }
 
 func (p *EngineTable) Partition(partId int32) *proto.Partition {

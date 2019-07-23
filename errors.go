@@ -17,6 +17,7 @@ var (
 
 	ErrMessageDispatcherExist = errors.New("message dispatcher already exist")
 	ErrMessageHandlerExist    = errors.New("message handler already exist")
+	ErrMessageHandlerNotExist    = errors.New("message handler not exist")
 )
 
 var (

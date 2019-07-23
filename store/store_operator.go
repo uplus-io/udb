@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	ggproto "github.com/golang/protobuf/proto"
 	"uplus.io/udb"
 	"uplus.io/udb/hash"
 	log "uplus.io/udb/logger"
@@ -30,6 +31,9 @@ type StoreOperator interface {
 	TAB(namespace, table string) *proto.Table
 	TABValue(namespace string, tableId int32) *proto.Table
 	TABIfAbsent(namespace, table string) *proto.Table
+
+	SysSet(table, key string, message ggproto.Message) error
+	SysGet(table, key string, message ggproto.Message) error
 
 	SetMeta(identity Identity, meta proto.DataMeta) error
 	GetMeta(identity Identity) (*proto.DataMeta, error)
@@ -217,6 +221,24 @@ func (p *StoreOperatorKV) TABIfAbsent(namespace string, tab string) *proto.Table
 	return table
 }
 
+func (p *StoreOperatorKV) SysSet(table, key string, message ggproto.Message) error {
+	identity := NewIdentity(ENGINE_NAMESPACE_SYSTEM, table, []byte(key))
+	bytes, err := proto.Marshal(message)
+	if err != nil {
+		return err
+	}
+	return p.store.Set(identity.IdBytes(), bytes)
+}
+
+func (p *StoreOperatorKV) SysGet(table, key string, message ggproto.Message) error {
+	identity := NewIdentity(ENGINE_NAMESPACE_SYSTEM, table, []byte(key))
+	bytes, err := p.store.Get(identity.IdBytes())
+	if err != nil {
+		return err
+	}
+	return proto.Unmarshal(bytes, message)
+}
+
 func (p *StoreOperatorKV) SetMeta(dataId Identity, meta proto.DataMeta) error {
 	metaId := IdentityMetaId(dataId)
 	bytes, err := proto.Marshal(&meta)
@@ -250,9 +272,9 @@ func (p *StoreOperatorKV) SetData(data Data) error {
 		meta.Id = IdentityVersionId(identity, meta.Version)
 	}
 	p.SetMeta(identity, *meta)
-	content := &proto.DataContent{Deleted:false,Content:data.Content}
+	content := &proto.DataContent{Deleted: false, Content: data.Content}
 	bytes, err := proto.Marshal(content)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 	err = p.store.Set(meta.Id, bytes)

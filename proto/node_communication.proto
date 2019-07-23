@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package proto;
+
+import "common.proto";
+
+message NodeInfo {
+    Repository repository = 1;
+    repeated Partition partitions = 2;
+}
