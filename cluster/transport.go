@@ -6,16 +6,10 @@ package cluster
 
 import (
 	"net"
+	"uplus.io/udb/core"
 )
 
 type TransportStatus uint8
-
-const (
-	TransportStatusSuspect TransportStatus = iota
-	TransportStatusAlive
-	TransportStatusDead
-	TransportStatusLeave
-)
 
 type TransportConfig struct {
 	Id            int32
@@ -30,7 +24,7 @@ type TransportConfig struct {
 }
 
 type TransportInfo struct {
-	Id     int32          //节点Id
+	Id     int32           //节点Id
 	Name   string          //节点名称
 	Status TransportStatus //节点状态
 	Addr   net.IP          //节点ip
@@ -43,5 +37,8 @@ type Transport interface {
 	Shutdown()
 	SendToTCP(nodeId int32, msg []byte) error
 	SendToUDP(nodeId int32, msg []byte) error
+	SyncSendToTCP(nodeId int32, msg []byte) ([]byte, error)
+	SyncSendToUDP(nodeId int32, msg []byte) ([]byte, error)
 	Me() TransportInfo
+	Node(nodeId int32) *core.Node
 }

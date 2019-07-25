@@ -7,6 +7,8 @@ package store
 import (
 	"uplus.io/udb"
 	"uplus.io/udb/config"
+	"uplus.io/udb/hash"
+	log "uplus.io/udb/logger"
 	"uplus.io/udb/proto"
 )
 
@@ -33,6 +35,29 @@ func NewEngine(config config.StorageConfig) *Engine {
 	return engine
 }
 
+func (p *Engine) ValidatePartition(nodeId int32) error {
+	for i, store := range p.partitions {
+		ring := int32(hash.GenerateConsistentRing(nodeId, i))
+		partition := store.Part()
+		if partition == nil {
+			part := proto.Partition{}
+			part.Version = VERSION
+			part.Id = ring
+			part.Index = int32(i)
+			_, err := store.PartIfAbsent(part)
+			if err != nil {
+				return err
+			}
+		} else {
+			if partition.Id != ring {
+				return udb.ErrPartRingVerifyFailed
+			}
+		}
+		log.Debugf("validate partition[%d] ring[%d]", i, ring)
+	}
+	return nil
+}
+
 func (p *Engine) Close() {
 	p.meta.Close()
 	for _, store := range p.partitions {
@@ -42,10 +67,6 @@ func (p *Engine) Close() {
 
 func (p *Engine) Table() *EngineTable {
 	return p.table
-}
-
-func (p *Engine) part(partIndex int32) StoreOperator {
-	return p.partitions[partIndex]
 }
 
 func (p *Engine) SetData(partId int32, data Data) error {
@@ -64,6 +85,14 @@ func (p *Engine) GetData(partId int32, id Identity) (*proto.DataContent, error) 
 		return nil, udb.ErrPartNotFound
 	}
 	return p.part(partition.Index).GetData(id)
+}
+
+func (p *Engine) part(partIndex int32) StoreOperator {
+	return p.partitions[partIndex]
+}
+
+func (p *Engine) PartSize() int {
+	return p.partSize
 }
 
 func (p *Engine) GetPart(partId int32) *proto.Partition {

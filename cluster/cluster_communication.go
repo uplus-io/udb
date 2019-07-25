@@ -17,13 +17,9 @@ func (p *ClusterCommunicationImplementor) SendNodeInfoTo(to int32) error {
 	transport := p.cluster.transport
 
 	nodeInfo := p.cluster.collectLocalInfo()
-
-	clusterStat := &proto.Packet{}
-	clusterStat.Category = proto.PacketCategory_System
-	clusterStat.Type = proto.PacketType_SystemHi
-	clusterStat.From = int32(transport.Me().Id)
 	nodeInfoData, _ := proto.Marshal(nodeInfo)
-	clusterStat.Content = nodeInfoData
+
+	clusterStat := proto.NewPacket(proto.PacketType_SystemHi, int32(transport.Me().Id), to, nodeInfoData)
 
 	statData, err := proto.Marshal(clusterStat)
 	if err != nil {

@@ -8,6 +8,8 @@ import (
 	ggproto "github.com/golang/protobuf/proto"
 )
 
+const PROTO_VERSION = 1
+
 func Marshal(pb ggproto.Message) ([]byte, error) {
 	return ggproto.Marshal(pb)
 }

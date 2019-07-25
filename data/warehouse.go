@@ -26,8 +26,12 @@ func NewWarehouse(communication proto.ClusterCommunication) *Warehouse {
 	return &Warehouse{Centers: core.NewArray(), applicants: core.NewArray(), communication: communication}
 }
 
+func GenerateRepositoryId(group string) int32 {
+	return utils.StringToInt32(group)
+}
+
 func (p *Warehouse) IfAbsentCreateDataCenter(group string) *DataCenter {
-	id := utils.StringToInt32(group)
+	id := GenerateRepositoryId(group)
 	return p.Centers.IfAbsentCreate(NewDataCenter(id)).(*DataCenter)
 }
 
@@ -86,6 +90,10 @@ func (p *Warehouse) AddNode(node *Node, partitionSize int, replicaSize int) erro
 	center.addNode(newNode)
 
 	node = newNode
+	return nil
+}
+
+func BuildNode(ip string, port int) *Node {
 	return nil
 }
 

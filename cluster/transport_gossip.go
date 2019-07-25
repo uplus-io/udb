@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-sockaddr"
 	"github.com/hashicorp/memberlist"
 	"uplus.io/udb"
+	"uplus.io/udb/core"
 	"uplus.io/udb/hash"
 	log "uplus.io/udb/logger"
 	"uplus.io/udb/proto"
@@ -74,6 +75,19 @@ func (p *TransportGossip) Shutdown() {
 
 func (p *TransportGossip) Me() TransportInfo {
 	return *p.me
+}
+
+func (p *TransportGossip) Node(nodeId int32) *core.Node {
+	nativeNode := p.nativeNode(nodeId)
+	if nativeNode != nil {
+		return &core.Node{
+			Native: nativeNode,
+			Id:     nodeId,
+			Addr:   nativeNode.Addr,
+			Port:   int32(nativeNode.Port),
+		}
+	}
+	return nil
 }
 
 func (p *TransportGossip) nativeNode(nodeId int32) *memberlist.Node {

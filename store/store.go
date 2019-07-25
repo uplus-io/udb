@@ -9,11 +9,13 @@ import (
 	"log"
 	"strings"
 	"uplus.io/udb/hash"
+	"uplus.io/udb/proto"
 	"uplus.io/udb/utils"
 )
 
 type StoreType uint8
 type StoreIterator func(key, data []byte) bool
+type StoreMetaIterator func(key []byte, meta proto.DataMeta) bool
 
 const (
 	VERSION = 1

@@ -17,7 +17,7 @@ var (
 
 	ErrMessageDispatcherExist = errors.New("message dispatcher already exist")
 	ErrMessageHandlerExist    = errors.New("message handler already exist")
-	ErrMessageHandlerNotExist    = errors.New("message handler not exist")
+	ErrMessageHandlerNotExist = errors.New("message handler not exist")
 )
 
 var (
@@ -27,9 +27,10 @@ var (
 
 //database
 var (
-	ErrPartNotFound    = errors.New("partition not found")
-	ErrPartAllocated   = errors.New("partition has been allocated")
-	ErrPartNotAllocate = errors.New("partition not allocate")
+	ErrPartRingVerifyFailed = errors.New("partition ring verify failed")
+	ErrPartNotFound         = errors.New("partition not found")
+	ErrPartAllocated        = errors.New("partition has been allocated")
+	ErrPartNotAllocate      = errors.New("partition not allocate")
 )
 
 var (

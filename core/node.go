@@ -5,27 +5,16 @@
 package core
 
 import (
-	"github.com/hashicorp/memberlist"
 	"net"
-)
-
-type NodeStatus uint8
-
-const (
-	NodeStatusSuspect NodeStatus = iota
-	NodeStatusAlive
-	NodeStatusDead
-	NodeStatusLeave
 )
 
 type Node struct {
 	//节点id
-	Id     uint32
-	Status NodeStatus
+	Id int32
 	//节点ip
 	Addr net.IP
 	//节点端口
-	Port      uint16
+	Port int32
 	//Timestamp proto.Timestamp
-	Native    *memberlist.Node
+	Native interface{}
 }

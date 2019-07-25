@@ -26,14 +26,14 @@ func (c HashRing) Swap(i, j int) {
 }
 
 type Node struct {
-	Id            int
+	Id            int32
 	Value         string
 	Weight        float32
 	Partition     int
 	partitionSize int
 }
 
-func NewNode(id int, value string, weight float32, partitionSize int) *Node {
+func NewNode(id int32, value string, weight float32, partitionSize int) *Node {
 	return &Node{
 		Id:            id,
 		Value:         value,
@@ -48,18 +48,18 @@ func (p *Node) Clone() *Node {
 
 type Consistent struct {
 	Nodes     map[uint32]Node
-	Resources map[int]bool
+	Resources map[int32]bool
 	ring      HashRing
-	nodeMap   map[int][]int
+	nodeMap   map[int32][]int
 	sync.RWMutex
 }
 
 func NewConsistent() *Consistent {
 	return &Consistent{
 		Nodes:     make(map[uint32]Node),
-		Resources: make(map[int]bool),
+		Resources: make(map[int32]bool),
 		ring:      HashRing{},
-		nodeMap:   make(map[int][]int),
+		nodeMap:   make(map[int32][]int),
 	}
 }
 
@@ -73,11 +73,11 @@ func (p *Consistent) Add(node *Node) bool {
 
 	count := int(float32(node.partitionSize) * node.Weight)
 	for i := 0; i < count; i++ {
-		str := p.joinStr(i, node)
+		ring := GenerateConsistentRing(node.Id, i)
 		clone := node.Clone()
 		clone.Partition = i
 		//p.Nodes[UInt32Of(str)] = *(node)
-		p.Nodes[UInt32Of(str)] = *(clone)
+		p.Nodes[ring] = *(clone)
 	}
 	p.Resources[node.Id] = true
 	return true
@@ -97,7 +97,7 @@ func (p *Consistent) sortHashRing() {
 }
 
 func (p *Consistent) initNodeMap() {
-	p.nodeMap = make(map[int][]int)
+	p.nodeMap = make(map[int32][]int)
 	for i, r := range p.ring {
 		node := p.Nodes[r]
 		rings, exist := p.nodeMap[node.Id]
@@ -111,12 +111,17 @@ func (p *Consistent) initNodeMap() {
 	}
 }
 
-func (p *Consistent) joinStr(i int, node *Node) string {
-	str := fmt.Sprintf("%s-%f-%d", node.Value, node.Weight, i)
-	return str
-	//return node.Value + "*" + strconv.Itoa(node.Weight) +
-	//	"-" + strconv.Itoa(i)
+func GenerateConsistentRing(nodeId int32, partIndex int) uint32 {
+	val := fmt.Sprintf("%d-%d", nodeId, partIndex)
+	return UInt32Of(val)
 }
+
+//func (p *Consistent) joinStr(i int, node *Node) string {
+//	str := fmt.Sprintf("%s-%d", node.Value, i)
+//	return str
+//	//return node.Value + "*" + strconv.Itoa(node.Weight) +
+//	//	"-" + strconv.Itoa(i)
+//}
 
 func (p *Consistent) Get(key string) Node {
 	p.RLock()
@@ -138,7 +143,7 @@ func (p *Consistent) GetNodeByRing(ring int) Node {
 	return p.Nodes[p.ring[ring]]
 }
 
-func (p *Consistent) NextPartition(nodeId int, partition int, size int) []Node {
+func (p *Consistent) NextPartition(nodeId int32, partition int, size int) []Node {
 	for ring, node := range p.Nodes {
 		if node.Id == nodeId && node.Partition == partition {
 			ringIndex := p.search(ring)
@@ -157,7 +162,7 @@ func (p *Consistent) NextPartition(nodeId int, partition int, size int) []Node {
 						lastRing = 0
 						loopTimes++
 					}
-					if loopTimes > 1{
+					if loopTimes > 1 {
 						return nil
 					}
 					lastNode = p.GetNodeByRing(lastRing)
@@ -278,8 +283,7 @@ func (p *Consistent) Remove(node *Node) {
 
 	count := int(float32(node.partitionSize) * node.Weight)
 	for i := 0; i < count; i++ {
-		str := p.joinStr(i, node)
-		delete(p.Nodes, UInt32Of(str))
+		delete(p.Nodes, GenerateConsistentRing(node.Id, i))
 	}
 	p.sortHashRing()
 }

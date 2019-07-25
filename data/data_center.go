@@ -10,7 +10,6 @@ import (
 	"uplus.io/udb/hash"
 	log "uplus.io/udb/logger"
 	"uplus.io/udb/proto"
-	"uplus.io/udb/utils"
 )
 
 type PartitionDiskType uint8
@@ -135,7 +134,7 @@ func (p *Area) Rack(id int32) *Rack {
 }
 
 func (p *Area) IfAbsentCreateRack(group string) *Rack {
-	id := utils.StringToInt32(group)
+	id := GenerateRepositoryId(group)
 	return p.Racks.IfAbsentCreate(NewRack(id)).(*Rack)
 }
 
@@ -175,7 +174,7 @@ func (p *DataCenter) Compare(item core.ArrayItem) int32 {
 }
 
 func (p *DataCenter) IfAbsentCreateArea(group string) *Area {
-	id := int32(utils.StringToInt(group))
+	id := GenerateRepositoryId(group)
 	return p.Area.IfAbsentCreate(NewArea(id)).(*Area)
 }
 
@@ -197,7 +196,7 @@ func (p *DataCenter) addNode(node *Node) error {
 		p.parts.Add(part)
 	}
 	address := fmt.Sprintf("%s:%d", node.Ip, node.Port)
-	p.dataHash.Add(hash.NewNode(int(node.Id), address, node.Weight, node.PartitionSize))
+	p.dataHash.Add(hash.NewNode(node.Id, address, node.Weight, node.PartitionSize))
 	p.nodes.Add(node)
 	return nil
 }
@@ -217,7 +216,7 @@ func (p *DataCenter) groupCircle() {
 	for i := 0; i < p.parts.Len(); i++ {
 		part := p.parts.Index(i).(*Partition)
 		node := p.nodes.Id(part.Node).(*Node)
-		replicas := p.dataHash.NextPartition(int(part.Node), int(part.Index), node.ReplicaSize)
+		replicas := p.dataHash.NextPartition(part.Node, int(part.Index), node.ReplicaSize)
 		for _, replica := range replicas {
 			partId := hash.Int32Of(fmt.Sprintf("%d-%d", replica.Id, replica.Partition))
 			replicaPart := p.parts.Id(partId).(*Partition)

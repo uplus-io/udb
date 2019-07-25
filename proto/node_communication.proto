@@ -3,8 +3,13 @@ syntax = "proto3";
 package proto;
 
 import "common.proto";
+import "node.proto";
 
 message NodeInfo {
     Repository repository = 1;
-    repeated Partition partitions = 2;
+    int32 partitionSize = 2;
+    int32 replicaSize = 3;
+    NodeHealth health = 4;
+    NodeStatus status = 5;
+    repeated Partition partitions = 6;
 }

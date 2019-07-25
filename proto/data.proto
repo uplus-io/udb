@@ -5,6 +5,9 @@ package proto;
 message DataMeta {
     int32 version = 1;
     bytes id = 2;
+    string namespace = 3;
+    string table = 4;
+    bytes key = 5;
 }
 
 message DataContent {
@@ -12,15 +15,14 @@ message DataContent {
     bytes content = 2;
 }
 
-message DataDesc {
-    int64 id = 1;
-    int32 version = 2;
-}
-
 message DataBody {
-    int64 id = 1;
-    int32 version = 2;
-    bytes content = 3;
+    bytes id = 1;
+    int32 ring = 2;
+    string namespace = 3;
+    string table = 4;
+    int32 partition = 5;
+    int32 version = 6;
+    bytes content = 7;
 }
 
 message PushRequest {
@@ -28,13 +30,30 @@ message PushRequest {
 }
 
 message PushResponse {
-    repeated DataBody data = 1;
+    bool success = 1;
 }
 
 message PullRequest {
-    repeated DataDesc data = 1;
+    repeated DataBody data = 1;
 }
 
 message PullResponse {
     repeated DataBody data = 1;
+}
+
+message PushPullRequest {
+
+}
+
+message PushPullResponse {
+
+}
+
+message DataMigrateRequest {
+    int32 startRing = 1;
+    int32 endRing = 2;
+}
+
+message DataMigrateResponse {
+    bool completed = 1;
 }

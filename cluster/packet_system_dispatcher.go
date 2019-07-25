@@ -48,6 +48,22 @@ func (p *PacketSystemDispatcher) handleClusterHi(packet proto.Packet) error {
 		log.Warnf("handle systemHi unmarshal packet error")
 	}
 	log.Debugf("handleClusterHi from[%d] nodeInfo[%s]", packet.From, nodeInfo.String())
+	//todo: mmap
+	/**
+		var buf bytes.Buffer
+		enc := gob.NewEncoder(&buf)
+		err := enc.Encode(request.data)
+		buf.Bytes()
+
+		buf := bytes.NewReader(value)
+		dec := gob.NewDecoder(buf)
+		var data types.DocData
+		err := dec.Decode(&data)
+
+		https://stackoverflow.com/questions/9203526/mapping-an-array-to-a-file-via-mmap-in-go
+	 */
+	//todo: local partition manager impl
+	p.cluster.JoinNode(packet.From, int(nodeInfo.PartitionSize), int(nodeInfo.ReplicaSize))
 	return nil
 	//node, b := p.center.Cluster.Node(message.From)
 	//if !b {

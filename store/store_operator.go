@@ -17,8 +17,8 @@ type StoreOperator interface {
 	PartIfAbsent(part proto.Partition) (*proto.Partition, error)
 	Part() *proto.Partition
 
-	MetaSeek(identity Identity, iter StoreIterator) error
-	MetaForEach(iter StoreIterator) error
+	MetaSeek(identity Identity, iter StoreMetaIterator) error
+	MetaForEach(iter StoreMetaIterator) error
 	DataSeek(identity Identity, iter StoreIterator) error
 	DataForEach(iter StoreIterator) error
 
@@ -83,11 +83,25 @@ func (p *StoreOperatorKV) Part() *proto.Partition {
 	return partition
 }
 
-func (p *StoreOperatorKV) MetaSeek(identity Identity, iter StoreIterator) error {
-	return p.store.Seek(IdentityMetaId(identity), iter)
+func (p *StoreOperatorKV) MetaSeek(identity Identity, iter StoreMetaIterator) error {
+	return p.store.Seek(IdentityMetaId(identity), func(key, data []byte) bool {
+		meta := proto.DataMeta{}
+		err := proto.Unmarshal(data, &meta)
+		if err != nil {
+			return false
+		}
+		return iter(key, meta)
+	});
 }
-func (p *StoreOperatorKV) MetaForEach(iter StoreIterator) error {
-	return p.store.Seek(FLAG_META, iter)
+func (p *StoreOperatorKV) MetaForEach(iter StoreMetaIterator) error {
+	return p.store.Seek(FLAG_META, func(key, data []byte) bool {
+		meta := proto.DataMeta{}
+		err := proto.Unmarshal(data, &meta)
+		if err != nil {
+			return false
+		}
+		return iter(key, meta)
+	})
 }
 func (p *StoreOperatorKV) DataSeek(identity Identity, iter StoreIterator) error {
 	return p.store.Seek(IdentityDataId(identity), iter)
@@ -266,7 +280,13 @@ func (p *StoreOperatorKV) SetData(data Data) error {
 		return err
 	}
 	if meta == nil {
-		meta = &proto.DataMeta{Id: IdentityVersionId(identity, 1), Version: 1}
+		meta = &proto.DataMeta{
+			Id:        IdentityVersionId(identity, 1),
+			Version:   1,
+			Namespace: identity.Namespace,
+			Table:     identity.Table,
+			Key:       identity.Key,
+		}
 	} else {
 		meta.Version = meta.Version + 1
 		meta.Id = IdentityVersionId(identity, meta.Version)

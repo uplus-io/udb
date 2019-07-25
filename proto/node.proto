@@ -4,6 +4,14 @@ package proto;
 
 import "common.proto";
 
+enum ClusterHealth {
+    CH_Unknown = 0;
+    CH_Normal = 1;
+    CH_Unavailable = 2;
+    CH_NotInitialize = 3;
+    CH_NotSafe = 4;
+}
+
 enum NodeHealth {
     Suspect = 0;
     Alive = 1;
