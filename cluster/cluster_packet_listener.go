@@ -19,5 +19,5 @@ func NewClusterPacketListener(pipeline Pipeline) *ClusterPacketListener {
 }
 
 func (p *ClusterPacketListener) OnReceive(packet *proto.Packet) {
-	p.Pipeline.Out() <- packet
+	p.Pipeline.OutWrite(packet)
 }

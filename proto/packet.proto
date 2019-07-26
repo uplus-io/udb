@@ -7,6 +7,14 @@ package proto;
 //    Data = 2;
 //}
 
+enum PacketMode {
+    TCP = 0;
+    UDP = 1;
+    HTTP = 2;
+    Multicast = 3;
+    Broadcast = 4;
+}
+
 enum PacketType {
     SystemHi = 0;
     DataPush = 1001;
@@ -20,8 +28,10 @@ enum PacketType {
 message Packet {
     int32 version = 1;
     string id = 2;
-    PacketType type = 3;
-    int32 from = 4;
-    int32 to = 5;
-    bytes content = 6;
+    PacketMode mode = 3;
+    PacketType type = 4;
+    int32 from = 5;
+    int32 to = 6;
+    repeated int32 receivers = 7;
+    bytes content = 8;
 }

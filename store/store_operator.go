@@ -37,8 +37,8 @@ type StoreOperator interface {
 
 	SetMeta(identity Identity, meta proto.DataMeta) error
 	GetMeta(identity Identity) (*proto.DataMeta, error)
-	SetData(data Data) error
-	GetData(identity Identity) (*proto.DataContent, error)
+	SetData(data Data, incrementVersion bool) error
+	GetData(identity Identity) (*proto.DataMeta, *proto.DataContent, error)
 }
 
 type StoreOperatorKV struct {
@@ -266,17 +266,17 @@ func (p *StoreOperatorKV) GetMeta(dataId Identity) (meta *proto.DataMeta, err er
 	metaId := IdentityMetaId(dataId)
 	meta = &proto.DataMeta{}
 	bytes, err := p.store.Get(metaId)
-	if err == udb.ErrDbKeyNotFound {
-		return nil, nil
+	if err !=nil {
+		return nil, err
 	}
 	err = proto.Unmarshal(bytes, meta)
 	return
 }
 
-func (p *StoreOperatorKV) SetData(data Data) error {
+func (p *StoreOperatorKV) SetData(data Data, incrementVersion bool) error {
 	identity := data.Id
 	meta, err := p.GetMeta(identity)
-	if err != nil {
+	if err != udb.ErrDbKeyNotFound {
 		return err
 	}
 	if meta == nil {
@@ -286,9 +286,14 @@ func (p *StoreOperatorKV) SetData(data Data) error {
 			Namespace: identity.Namespace,
 			Table:     identity.Table,
 			Key:       identity.Key,
+			Ring:      identity.ring,
 		}
 	} else {
-		meta.Version = meta.Version + 1
+		if incrementVersion {
+			meta.Version = meta.Version + 1
+		} else {
+			meta.Version = data.Version
+		}
 		meta.Id = IdentityVersionId(identity, meta.Version)
 	}
 	p.SetMeta(identity, *meta)
@@ -304,19 +309,19 @@ func (p *StoreOperatorKV) SetData(data Data) error {
 	}
 	return nil
 }
-func (p *StoreOperatorKV) GetData(identity Identity) (*proto.DataContent, error) {
+func (p *StoreOperatorKV) GetData(identity Identity) (*proto.DataMeta, *proto.DataContent, error) {
 	meta, err := p.GetMeta(identity)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	bytes, err := p.store.Get(meta.Id)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	data := &proto.DataContent{}
 	err = proto.Unmarshal(bytes, data)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return data, nil
+	return meta, data, nil
 }

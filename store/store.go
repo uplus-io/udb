@@ -88,6 +88,7 @@ type Identity struct {
 	Key            []byte //用户主键
 	keyValue       int64  //用户主键系统id值
 	id             []byte //系统id
+	ring           int32  //系统id ring值
 }
 
 func NsTabBytes(ns, tab int32) []byte {
@@ -127,6 +128,7 @@ func NewIdentity(ns, tab string, key []byte) *Identity {
 	identity.TableId = hash.Int32Of(tab)
 	identity.keyValue = hash.Int64(identity.Key)
 	identity.id = NsTabKeyBytes(identity.NamespaceId, identity.TableId, identity.Key)
+	identity.ring = hash.Int32(identity.id)
 	return identity
 }
 

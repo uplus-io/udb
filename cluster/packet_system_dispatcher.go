@@ -8,6 +8,7 @@ import (
 	"uplus.io/udb"
 	log "uplus.io/udb/logger"
 	"uplus.io/udb/proto"
+	"uplus.io/udb/store"
 )
 
 type PacketSystemDispatcher struct {
@@ -19,6 +20,11 @@ type PacketSystemDispatcher struct {
 func NewPacketSystemDispatcher(cluster *Cluster) *PacketSystemDispatcher {
 	dispatcher := &PacketSystemDispatcher{cluster: cluster, handlerMap: make(map[proto.PacketType]PacketHandler)}
 	dispatcher.register(proto.PacketType_SystemHi, dispatcher.handleClusterHi)
+	dispatcher.register(proto.PacketType_DataMigrate, dispatcher.handleMigrate)
+	dispatcher.register(proto.PacketType_DataMigrateReply, dispatcher.handleMigrateReply)
+	dispatcher.register(proto.PacketType_DataPush, dispatcher.handlePush)
+	dispatcher.register(proto.PacketType_DataPushReply, dispatcher.handlePushReply)
+	dispatcher.register(proto.PacketType_DataPull, dispatcher.handlePull)
 	return dispatcher
 }
 
@@ -74,4 +80,36 @@ func (p *PacketSystemDispatcher) handleClusterHi(packet proto.Packet) error {
 	//node.Timestamp.Remote = timestamp.Remote
 	//node.Timestamp.Local = timestamp.Local
 	//log.Debugf("update cluster node[%d] timestamp l:%d r:%d", node.GetId, node.Timestamp.Local, node.Timestamp.Remote)
+}
+
+func (p *PacketSystemDispatcher) handleMigrate(packet proto.Packet) error {
+	request := proto.DataMigrateRequest{}
+	proto.Unmarshal(packet.Content, &request)
+	operations := store.NewDataOperations(p.cluster.engine, p.cluster.dataCommunication, packet.From)
+	operations.Migrate(request.StartRing, request.EndRing)
+	return nil
+}
+func (p *PacketSystemDispatcher) handleMigrateReply(packet proto.Packet) error {
+	migrateResponse := proto.DataMigrateResponse{}
+	proto.Unmarshal(packet.Content, &migrateResponse)
+	log.Debugf("migrateReply[%s]", migrateResponse.String())
+	return nil
+}
+
+func (p *PacketSystemDispatcher) handlePush(packet proto.Packet) error {
+	pushRequest := proto.PushRequest{}
+	proto.Unmarshal(packet.Content, &pushRequest)
+	operations := store.NewDataOperations(p.cluster.engine, p.cluster.dataCommunication, packet.From)
+	operations.Push(pushRequest.Data)
+	return nil
+}
+
+func (p *PacketSystemDispatcher) handlePushReply(packet proto.Packet) error {
+	pushResponse := proto.PushResponse{}
+	proto.Unmarshal(packet.Content, &pushResponse)
+	log.Debugf("pushReply[%s]", pushResponse.String())
+	return nil
+}
+func (p *PacketSystemDispatcher) handlePull(packet proto.Packet) error {
+	return nil
 }

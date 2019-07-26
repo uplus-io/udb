@@ -28,14 +28,14 @@ func TestEngine_SetData(t *testing.T) {
 	identity1 := NewIdOfData("udb", "user", []byte("1"))
 	identity2 := NewIdOfData("udb", "user", []byte("2"))
 	err = engine.SetData(1000, *NewData(*identity1, utils.LInt32ToBytes(101)))
-	printError(err,"set data error")
+	printError(err, "set data error")
 	err = engine.SetData(1001, *NewData(*identity2, utils.LInt32ToBytes(102)))
-	printError(err,"set data error")
+	printError(err, "set data error")
 
 	val1, _ := engine.GetData(1000, *identity1)
-	printDataContent(identity1.Key,val1)
+	printDataContent(identity1.Key, val1)
 	val2, _ := engine.GetData(1001, *identity2)
-	printDataContent(identity2.Key,val2)
+	printDataContent(identity2.Key, val2)
 	printAllData(engine)
 }
 
@@ -46,8 +46,8 @@ func printError(err error, format string, args ...interface{}) {
 	}
 }
 
-func printDataContent(key[]byte,data *proto.DataContent)  {
-	fmt.Printf("data key:%s content[%s]\n",key,data.String())
+func printDataContent(key []byte, data *proto.DataContent) {
+	fmt.Printf("data key:%s content[%s]\n", key, data.String())
 }
 
 func printAllData(engine *Engine) {
@@ -82,10 +82,8 @@ func printNSAndTAB(operator StoreOperator) {
 }
 
 func printMetaStorage(operator StoreOperator) {
-	operator.MetaForEach(func(key, data []byte) bool {
-		meta := &proto.DataMeta{}
-		proto.Unmarshal(data,meta)
-		printMetaInfo(key,meta)
+	operator.MetaForEach(func(key []byte, meta proto.DataMeta) bool {
+		printMetaInfo(key,&meta)
 		return true
 	})
 }

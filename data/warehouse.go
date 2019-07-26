@@ -7,10 +7,25 @@ package data
 import (
 	"strings"
 	"sync"
+	"time"
 	"uplus.io/udb/core"
 	log "uplus.io/udb/logger"
 	"uplus.io/udb/proto"
 	"uplus.io/udb/utils"
+)
+
+const (
+	warehouseAvailableInterval = 5 //可用时间间隔 second
+)
+
+type WarehouseListener func(status WarehouseStatus)
+
+type WarehouseStatus uint8
+
+const (
+	WarehouseStatus_Launching WarehouseStatus = iota
+	WarehouseStatus_Normal
+	WarehouseStatus_Node_Changed
 )
 
 type Warehouse struct {
@@ -18,12 +33,18 @@ type Warehouse struct {
 	applicants    *core.Array
 	communication proto.ClusterCommunication
 
-	readying bool
+	available             bool  //可用
+	lastCommunicationTime int64 //最后节点状态变化通讯时间
+	clusterReadying       bool  //当前节点服务已就绪标记
+	status                WarehouseStatus
+
+	listener WarehouseListener
+
 	sync.RWMutex
 }
 
 func NewWarehouse(communication proto.ClusterCommunication) *Warehouse {
-	return &Warehouse{Centers: core.NewArray(), applicants: core.NewArray(), communication: communication}
+	return &Warehouse{Centers: core.NewArray(), applicants: core.NewArray(), communication: communication, status: WarehouseStatus_Launching}
 }
 
 func GenerateRepositoryId(group string) int32 {
@@ -39,10 +60,16 @@ func (p *Warehouse) IfPresent(ipv4 string) *DataCenter {
 	return nil
 }
 
+func (p *Warehouse) GetCenter(dc int32) *DataCenter {
+	p.RLock()
+	defer p.RUnlock()
+	return p.Centers.Id(dc).(*DataCenter)
+}
+
 func (p *Warehouse) GetNode(dc int32, nodeId int32) *Node {
 	p.RLock()
 	defer p.RUnlock()
-	center := p.Centers.Id(dc).(*DataCenter)
+	center := p.GetCenter(dc)
 	if center != nil {
 		return center.nodes.Id(nodeId).(*Node)
 	}
@@ -50,8 +77,10 @@ func (p *Warehouse) GetNode(dc int32, nodeId int32) *Node {
 }
 
 func (p *Warehouse) JoinNode(ip string, port int) *Node {
+	p.lastCommunicationTime = time.Now().Unix()
+	p.status = WarehouseStatus_Node_Changed
 	node := NewNode(ip, port, 0)
-	if p.readying {
+	if p.clusterReadying {
 		p.communication.SendNodeInfoTo(node.Id)
 	} else {
 		p.applicants.Add(node)
@@ -61,8 +90,10 @@ func (p *Warehouse) JoinNode(ip string, port int) *Node {
 }
 
 func (p *Warehouse) LeaveNode(ip string, port int) *Node {
+	p.lastCommunicationTime = time.Now().Unix()
+
 	node := NewNode(ip, port, 0)
-	if p.readying {
+	if p.clusterReadying {
 		//todo:set node invalid
 	} else {
 		p.applicants.Delete(node.Id)
@@ -93,10 +124,6 @@ func (p *Warehouse) AddNode(node *Node, partitionSize int, replicaSize int) erro
 	return nil
 }
 
-func BuildNode(ip string, port int) *Node {
-	return nil
-}
-
 func (p *Warehouse) Group() {
 	p.Lock()
 	defer p.Unlock()
@@ -110,18 +137,34 @@ func (p *Warehouse) Applicants() *core.Array {
 	return p.applicants
 }
 
-func (p *Warehouse) Readying() {
+func (p *Warehouse) Readying(listener WarehouseListener) {
 	p.Lock()
 	defer p.Unlock()
-	p.readying = true
+	p.clusterReadying = true
+	p.listener = listener
+	go p.selfCheck()
+}
+
+func (p *Warehouse) selfCheck() {
+	for {
+		ts := time.Now().Unix() - p.lastCommunicationTime
+		log.Debugf("self check,ts:%d interval:%d", ts, warehouseAvailableInterval)
+		if ts >= warehouseAvailableInterval {
+			p.status = WarehouseStatus_Normal
+			p.listener(p.status)
+			break
+			//runtime.Gosched()
+		}
+		time.Sleep(time.Second)
+	}
 }
 
 func (p *Warehouse) print() {
 	for i := 0; i < p.Centers.Len(); i++ {
 		center := p.Centers.Index(i).(*DataCenter)
-		log.Debugf("%d dataCenter[%d] has %d areas", i, center.Id, center.Area.Len())
-		for j := 0; j < center.Area.Len(); j++ {
-			area := center.Area.Index(j).(*Area)
+		log.Debugf("%d dataCenter[%d] has %d areas", i, center.Id, center.Areas.Len())
+		for j := 0; j < center.Areas.Len(); j++ {
+			area := center.Areas.Index(j).(*Area)
 			log.Debugf("    %d area[%d] has %d racks", j, area.Id, area.Racks.Len())
 			for k := 0; k < area.Racks.Len(); k++ {
 				rack := area.Racks.Index(k).(*Rack)

@@ -60,8 +60,9 @@ func (p *TransportGossip) Serving() *TransportInfo {
 		panic(fmt.Sprintf("Cluster lanuch fail:%v", err.Error()))
 	}
 	members.Join(cfg.Seeds)
+	local := members.LocalNode()
 	p.members = members
-	p.me = &TransportInfo{Id: int32(cfg.Id),}
+	p.me = &TransportInfo{Id: int32(cfg.Id), Addr: local.Addr, Port: local.Port}
 
 	for _, node := range members.Members() {
 		p.NotifyJoin(node)

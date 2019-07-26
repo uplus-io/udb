@@ -37,8 +37,6 @@ type Transport interface {
 	Shutdown()
 	SendToTCP(nodeId int32, msg []byte) error
 	SendToUDP(nodeId int32, msg []byte) error
-	SyncSendToTCP(nodeId int32, msg []byte) ([]byte, error)
-	SyncSendToUDP(nodeId int32, msg []byte) ([]byte, error)
 	Me() TransportInfo
 	Node(nodeId int32) *core.Node
 }

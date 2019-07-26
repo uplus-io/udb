@@ -81,7 +81,10 @@ func (p *EngineTable) RepositoryUpdate(repository proto.Repository) error {
 	return p.engine.meta.SysSet(ENGINE_TABLE_CLUSTERS, ENGINE_KEY_META_REPOSITORY, &repository)
 }
 
-func(p *EngineTable)  PartitionOfIndex(partIndex int32)*proto.Partition  {
+func (p *EngineTable) PartitionOfIndex(partIndex int32) *proto.Partition {
+	if int(partIndex) >= len(p.parts) {
+		partIndex = 0
+	}
 	return p.engine.part(partIndex).Part()
 }
 

@@ -258,6 +258,16 @@ func (p *Consistent) NextRing(key string) int {
 	return i
 }
 
+func (p *Consistent) NextOfRing(ring uint32) uint32 {
+	next := p.search(ring)
+	ringLength := len(p.ring)
+
+	if next == ringLength-1 {
+		next = 0
+	}
+	return p.ring[next]
+}
+
 func (p *Consistent) search(hash uint32) int {
 	//顺时针查找哈希环中接近最大值的hash
 	ringLength := len(p.ring)

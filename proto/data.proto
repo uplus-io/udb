@@ -8,6 +8,7 @@ message DataMeta {
     string namespace = 3;
     string table = 4;
     bytes key = 5;
+    int32 ring = 6;
 }
 
 message DataContent {
@@ -20,9 +21,10 @@ message DataBody {
     int32 ring = 2;
     string namespace = 3;
     string table = 4;
-    int32 partition = 5;
-    int32 version = 6;
-    bytes content = 7;
+    int32 partitionId = 5;
+    int32 partitionIndex = 6;
+    int32 version = 7;
+    bytes content = 8;
 }
 
 message PushRequest {
@@ -31,6 +33,7 @@ message PushRequest {
 
 message PushResponse {
     bool success = 1;
+    repeated DataBody data = 2;
 }
 
 message PullRequest {

@@ -28,10 +28,10 @@ type Capacity struct {
 type Partition struct {
 	Id         int32 //分区Id
 	Index      int32
-	DataCenter int32 //数据中心Id
-	Area       int32 //区Id
-	Rack       int32 //机架Id
-	Node       int32 //节点Id
+	DataCenter int32  //数据中心Id
+	Area       int32  //区Id
+	Rack       int32  //机架Id
+	Node       int32  //节点Id
 	Ip         string //节点Ip
 	Port       int    //节点端口
 	Path       string //分区根路径
@@ -87,7 +87,7 @@ func (p *Node) Compare(item core.ArrayItem) int32 {
 }
 
 type Rack struct {
-	Id    int32 //机架Id
+	Id    int32  //机架Id
 	Name  string //机架名
 	Nodes *core.Array
 }
@@ -145,9 +145,9 @@ const (
 )
 
 type DataCenter struct {
-	Id              int32 //数据中心Id
+	Id              int32  //数据中心Id
 	Name            string //数据中心名
-	Area            *core.Array
+	Areas           *core.Array
 	dataHash        *hash.Consistent
 	parts           *core.Array
 	nodes           *core.Array
@@ -157,7 +157,7 @@ type DataCenter struct {
 func NewDataCenter(id int32) *DataCenter {
 	return &DataCenter{
 		Id:              id,
-		Area:            core.NewArray(),
+		Areas:           core.NewArray(),
 		dataHash:        hash.NewConsistent(),
 		parts:           core.NewArray(),
 		nodes:           core.NewArray(),
@@ -173,9 +173,13 @@ func (p *DataCenter) Compare(item core.ArrayItem) int32 {
 	return p.GetId() - item.GetId()
 }
 
+func(p *DataCenter) Area(areaId int32)*Area  {
+	return p.Areas.Id(areaId).(*Area)
+}
+
 func (p *DataCenter) IfAbsentCreateArea(group string) *Area {
 	id := GenerateRepositoryId(group)
-	return p.Area.IfAbsentCreate(NewArea(id)).(*Area)
+	return p.Areas.IfAbsentCreate(NewArea(id)).(*Area)
 }
 
 func (p *DataCenter) LeaveNode(nodeId uint32) error {
@@ -184,6 +188,18 @@ func (p *DataCenter) LeaveNode(nodeId uint32) error {
 
 func (p *DataCenter) UpdateNodeStatus(nodeId uint32, status proto.NodeStatus) error {
 	return nil
+}
+
+func (p *DataCenter) NextOfRing(ring uint32) uint32 {
+	return p.dataHash.NextOfRing(ring)
+}
+
+func (p *DataCenter) Nodes() []Node {
+	nodes := make([]Node, p.nodes.Len())
+	for i := 0; i < p.nodes.Len(); i++ {
+		nodes[i] = *(p.nodes.Index(i).(*Node))
+	}
+	return nodes
 }
 
 func (p *DataCenter) addNode(node *Node) error {

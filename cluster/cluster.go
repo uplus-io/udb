@@ -18,9 +18,10 @@ type Cluster struct {
 	id     int32
 	config config.ClusterConfig
 
-	engine        *store.Engine
-	warehouse     *data.Warehouse
-	communication proto.ClusterCommunication
+	engine            *store.Engine
+	warehouse         *data.Warehouse
+	communication     proto.ClusterCommunication
+	dataCommunication proto.ClusterDataCommunication
 
 	packetDispatcher PacketDispatcher
 
@@ -56,8 +57,9 @@ func NewCluster(config config.ClusterConfig) *Cluster {
 
 func (p *Cluster) Listen() {
 	p.communication = NewClusterCommunicationImplementor(p)
+	p.dataCommunication = NewClusterDataCommunicationImplementor(p)
 	p.startEngine()
-	p.launchGossip()
+	go p.launchGossip()
 	go p.packetInLoop()
 	go p.packetOutLoop()
 	p.nodeHealth = proto.NodeHealth_Alive
@@ -120,15 +122,39 @@ func (p *Cluster) launchGossip() {
 		PacketListener: NewClusterPacketListener(p.pipeline)}
 
 	p.transport = NewTransportGossip(transportConfig)
+
+	//server launch
 	transportInfo := p.transport.Serving()
 	p.id = transportInfo.Id
+	//storage partition validate
 	p.engine.ValidatePartition(p.id)
+
 	p.launched = true
 	log.Debugf("cluster node[%d] started %v", p.id, p.launched)
 
 	localInfo := p.collectLocalInfo()
 	p.JoinNode(p.id, int(localInfo.PartitionSize), int(localInfo.ReplicaSize))
+	p.checkWarehouse()
+}
+
+func (p *Cluster) checkWarehouse() {
 	p.contactCluster()
+	p.warehouse.Readying(func(status data.WarehouseStatus) {
+		transportInfo := p.transport.Me()
+		repository := proto.ParseRepository(transportInfo.Addr.String())
+		parts := p.engine.Parts()
+		for _, part := range parts {
+			center := p.warehouse.GetCenter(repository.DataCenter)
+			next := center.NextOfRing(uint32(part.Id))
+			request := &proto.DataMigrateRequest{StartRing: part.Id, EndRing: int32(next)}
+
+			for _, node := range center.Nodes() {
+				if node.Id != transportInfo.Id {
+					p.dataCommunication.MigrateRequest(node.Id, request)
+				}
+			}
+		}
+	})
 }
 
 func (p *Cluster) contactCluster() {
@@ -142,7 +168,7 @@ func (p *Cluster) contactCluster() {
 			}
 		}
 	}
-	p.warehouse.Readying()
+
 }
 
 func (p *Cluster) JoinNode(nodeId int32, partitionSize int, replicaSize int) {
@@ -150,12 +176,40 @@ func (p *Cluster) JoinNode(nodeId int32, partitionSize int, replicaSize int) {
 
 	p.warehouse.AddNode(data.NewNode(node.Addr.String(), int(node.Port), 1), partitionSize, replicaSize)
 	p.warehouse.Group()
+
+}
+
+func (p *Cluster) SendAsyncPacket(packet *proto.Packet) {
+	p.pipeline.InWrite(packet)
+}
+
+func (p *Cluster) SendSyncPacket(packet *proto.Packet) *proto.Packet {
+	channel := p.pipeline.InSyncWrite(packet)
+	return <-channel.Read()
 }
 
 func (p *Cluster) packetInLoop() {
 	for {
-		packet := <-p.pipeline.In()
+		packet := <-p.pipeline.InRead()
 		log.Debugf("send packet[%s]", packet.String())
+		bytes, err := proto.Marshal(packet)
+		if err != nil {
+			log.Errorf("waiting to send packet marshal error[%s]", packet.String())
+			continue
+		}
+		if packet.Mode == proto.PacketMode_TCP {
+			err := p.transport.SendToTCP(packet.To, bytes)
+			if err != nil {
+				log.Errorf("sending tcp packet error[%s]", packet.String())
+				continue
+			}
+		} else if packet.Mode == proto.PacketMode_UDP {
+			err := p.transport.SendToUDP(packet.To, bytes)
+			if err != nil {
+				log.Errorf("sending udp packet error[%s]", packet.String())
+				continue
+			}
+		}
 		//node := p.warehouse.GetNode(packet.GetDataCenter(), packet.GetTo())
 		//if node != nil {
 		//}
@@ -164,12 +218,12 @@ func (p *Cluster) packetInLoop() {
 
 func (p *Cluster) packetOutLoop() {
 	for {
-		packet := <-p.pipeline.Out()
+		packet := <-p.pipeline.OutRead()
 		log.Debugf("received packet[%s]", packet.String())
 		go func() {
 			err := p.packetDispatcher.Dispatch(*packet)
 			if err != nil {
-				p.pipeline.Out() <- packet
+				p.pipeline.OutWrite(packet)
 			}
 		}()
 
