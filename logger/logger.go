@@ -158,3 +158,14 @@ func (p *logFileWriter) Write(data []byte) (n int, err error) {
 	}
 	return n, e
 }
+
+type EmptyWriter struct {
+}
+
+func NewEmptyWriter() *EmptyWriter {
+	return &EmptyWriter{}
+}
+
+func (EmptyWriter) Write(p []byte) (n int, err error) {
+	return len(p), nil
+}

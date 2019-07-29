@@ -54,6 +54,7 @@ func (p *TransportGossip) Serving() *TransportInfo {
 	config.EnableCompression = true
 	config.Delegate = p
 	config.Events = p
+	config.LogOutput = log.NewEmptyWriter()
 
 	members, err := memberlist.Create(config)
 	if err != nil {
