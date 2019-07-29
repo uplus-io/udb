@@ -173,7 +173,7 @@ func (p *DataCenter) Compare(item core.ArrayItem) int32 {
 	return p.GetId() - item.GetId()
 }
 
-func(p *DataCenter) Area(areaId int32)*Area  {
+func (p *DataCenter) Area(areaId int32) *Area {
 	return p.Areas.Id(areaId).(*Area)
 }
 
@@ -221,12 +221,13 @@ func (p *DataCenter) Group() {
 	p.dataHash.Distribution()
 	log.Debugf("dataCenter[%d] ring list-----------------", p.Id)
 	p.dataHash.PrintRings()
-
 	if p.ReplicaStrategy == DataCenterReplicaStrategy_Circle {
 		p.groupCircle()
 	} else {
 		panic(fmt.Sprintf("not support replica strategy:%v", p.ReplicaStrategy))
 	}
+	log.Debugf("dataCenter[%d] node and ring maps-----------------", p.Id)
+	p.dataHash.PrintMaps()
 }
 func (p *DataCenter) groupCircle() {
 	for i := 0; i < p.parts.Len(); i++ {

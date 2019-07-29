@@ -51,6 +51,7 @@ type Consistent struct {
 	Resources map[int32]bool
 	ring      HashRing
 	nodeMap   map[int32][]int
+	ringMap   map[uint32]int32
 	sync.RWMutex
 }
 
@@ -85,7 +86,7 @@ func (p *Consistent) Add(node *Node) bool {
 
 func (p *Consistent) Distribution() {
 	p.sortHashRing()
-	p.initNodeMap()
+	p.initNodeRingMap()
 }
 
 func (p *Consistent) sortHashRing() {
@@ -96,8 +97,9 @@ func (p *Consistent) sortHashRing() {
 	sort.Sort(p.ring)
 }
 
-func (p *Consistent) initNodeMap() {
+func (p *Consistent) initNodeRingMap() {
 	p.nodeMap = make(map[int32][]int)
+	p.ringMap = make(map[uint32]int32)
 	for i, r := range p.ring {
 		node := p.Nodes[r]
 		rings, exist := p.nodeMap[node.Id]
@@ -108,6 +110,7 @@ func (p *Consistent) initNodeMap() {
 			rings = append(rings, i)
 		}
 		p.nodeMap[node.Id] = rings
+		p.ringMap[r] = node.Id
 	}
 }
 
@@ -309,7 +312,14 @@ func (p *Consistent) PrintRings() {
 		last = int(r)
 	}
 
-	//for id, rings := range p.nodeMap {
-	//	log.Infof("node:%d rings:%v", id, rings)
-	//}
+
+}
+
+func (p *Consistent)PrintMaps() {
+	for id, rings := range p.nodeMap {
+		log.Infof("node:%d rings:%v", id, rings)
+	}
+	for ring, nodeId := range p.ringMap {
+		log.Infof("ring:%d nodeId:%d", ring, nodeId)
+	}
 }

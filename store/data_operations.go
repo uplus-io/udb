@@ -94,7 +94,7 @@ func (p *DataOperations) Push(dataArray []*proto.DataBody) {
 			p.engine.SetData(part.Id, *dat, false)
 			log.Debugf(
 				"local data older,update[%s]ring:%d from v:%d to v:%d",
-				string(identity.IdBytes()), uint32(data.Ring), data.Version, meta.Version)
+				string(identity.IdBytes()), uint32(data.Ring), meta.Version,data.Version)
 		}
 		result[i] = &proto.DataBody{Namespace: data.Namespace, Table: data.Table, Id: data.Id, Version: data.Version}
 	}
