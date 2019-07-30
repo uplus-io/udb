@@ -85,7 +85,7 @@ func (p *PacketSystemDispatcher) handleClusterHi(packet proto.Packet) error {
 func (p *PacketSystemDispatcher) handleMigrate(packet proto.Packet) error {
 	request := proto.DataMigrateRequest{}
 	proto.Unmarshal(packet.Content, &request)
-	operations := store.NewDataOperations(p.cluster.engine, p.cluster.dataCommunication, packet.From)
+	operations := store.NewLocalDataOperations(p.cluster.engine, p.cluster.dataCommunication, packet.From)
 	operations.Migrate(request.StartRing, request.EndRing)
 	return nil
 }
@@ -99,7 +99,7 @@ func (p *PacketSystemDispatcher) handleMigrateReply(packet proto.Packet) error {
 func (p *PacketSystemDispatcher) handlePush(packet proto.Packet) error {
 	pushRequest := proto.PushRequest{}
 	proto.Unmarshal(packet.Content, &pushRequest)
-	operations := store.NewDataOperations(p.cluster.engine, p.cluster.dataCommunication, packet.From)
+	operations := store.NewLocalDataOperations(p.cluster.engine, p.cluster.dataCommunication, packet.From)
 	operations.Push(pushRequest.Data)
 	return nil
 }
